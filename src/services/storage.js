@@ -124,7 +124,26 @@ export function getVentas() {
 export function registrarVenta(venta) {
   const ventas = getVentas();
   const nextId = ventas.length ? Math.max(...ventas.map(v => v.ven_codigo)) + 1 : 1;
-  const nueva  = { ven_codigo: nextId, ...venta };
+
+  /* Agregar det_codigo y ven_codigo a cada detalle */
+  const detalle = venta.detalle.map((d, i) => ({
+    det_codigo: i + 1,
+    ven_codigo: nextId,
+    pro_codigo: d.pro_codigo,
+    cantidad:   d.cantidad,
+    subtotal:   d.subtotal
+  }));
+
+  const nueva = {
+    ven_codigo:  nextId,
+    ven_fecha:   venta.ven_fecha,
+    ven_total:   venta.ven_total,
+    usu_codigo:  venta.usu_codigo || null,
+    emp_codigo:  venta.emp_codigo || null,
+    cliente:     venta.cliente,
+    detalle
+  };
+
   ventas.push(nueva);
   localStorage.setItem(KEYS.ventas, JSON.stringify(ventas));
   return nueva;

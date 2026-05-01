@@ -91,16 +91,17 @@ export default function Carrito() {
     saveProductos(productos);
 
     const venta = registrarVenta({
-      ven_fecha:  new Date().toLocaleDateString('es-CO'),
-      ven_total:  total,
-      usu_codigo: session?.id || null,
-      cliente:    form,
-      detalle:    carrito.map(i => ({
-        pro_codigo: i.pro_codigo,
-        cantidad:   i.cantidad,
-        subtotal:   i.pro_precio * i.cantidad
-      }))
-    });
+    ven_fecha:  new Date().toLocaleDateString('es-CO'),
+    ven_total:  total,
+    usu_codigo: session?.rol === 'usuario'  ? session?.id : null,
+    emp_codigo: session?.rol !== 'usuario'  ? session?.id : null,
+    cliente:    form,
+    detalle:    carrito.map(i => ({
+    pro_codigo: i.pro_codigo,
+    cantidad:   i.cantidad,
+    subtotal:   i.pro_precio * i.cantidad
+  }))
+});
 
     clearCarrito();
     setCarrito([]);

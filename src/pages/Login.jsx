@@ -2,15 +2,14 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getAuthUsers } from '../services/storage';
-import 'bootstrap-icons/font/bootstrap-icons.css';
 
 export default function Login() {
   const { login, session } = useAuth();
   const navigate = useNavigate();
 
-  const [email, setEmail]   = useState('');
-  const [pass, setPass]     = useState('');
-  const [error, setError]   = useState('');
+  const [email, setEmail]     = useState('');
+  const [pass, setPass]       = useState('');
+  const [error, setError]     = useState('');
   const [verPass, setVerPass] = useState(false);
 
   /* Si ya hay sesión, redirigir */
@@ -97,6 +96,16 @@ export default function Login() {
           <button className="btn btn-rose btn-login" type="submit">
             Ingresar →
           </button>
+
+          <div style={{ textAlign: 'center', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+            ¿No tienes cuenta?{' '}
+            <span
+              style={{ color: 'var(--rose-dk)', fontWeight: 700, cursor: 'pointer' }}
+              onClick={() => navigate('/registro')}
+            >
+              Regístrate
+            </span>
+          </div>
 
         </form>
 

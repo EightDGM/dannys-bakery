@@ -8,7 +8,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [totalItems, setTotalItems] = useState(0);
 
-  /* ── Actualizar badge al montar y cuando cambie el carrito ── */
+  /*actualiza badge al montar y cuando cambie el carrito*/
   useEffect(() => {
     function actualizarBadge() {
       const carrito = getCarrito();
@@ -18,7 +18,7 @@ export default function Navbar() {
 
     actualizarBadge();
 
-    /* Escuchar evento personalizado cuando se agrega al carrito */
+    /* evento personalizado cuando se agrega al carrito */
     window.addEventListener('carritoActualizado', actualizarBadge);
     return () => window.removeEventListener('carritoActualizado', actualizarBadge);
   }, []);
@@ -42,6 +42,10 @@ export default function Navbar() {
 
         <NavLink to="/productos" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
           Productos
+        </NavLink>
+
+        <NavLink to="/historial" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
+          <i className="bi bi-clock-history"></i> Historial
         </NavLink>
 
         {puede('comprar') && (
