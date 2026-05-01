@@ -63,6 +63,7 @@ export default function Productos() {
 
     saveCarrito(carrito);
     toast(`✅ ${producto.pro_nombre} agregado al carrito`, 'ok');
+    window.dispatchEvent(new Event('carritoActualizado'));
   }
 
   /* ── Abrir modal agregar ── */

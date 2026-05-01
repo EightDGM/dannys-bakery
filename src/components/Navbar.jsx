@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getCarrito } from '../services/storage';
@@ -5,8 +6,22 @@ import { getCarrito } from '../services/storage';
 export default function Navbar() {
   const { session, logout, puede } = useAuth();
   const navigate = useNavigate();
-  const carrito  = getCarrito();
-  const totalItems = carrito.reduce((sum, i) => sum + i.cantidad, 0);
+  const [totalItems, setTotalItems] = useState(0);
+
+  /* ── Actualizar badge al montar y cuando cambie el carrito ── */
+  useEffect(() => {
+    function actualizarBadge() {
+      const carrito = getCarrito();
+      const total   = carrito.reduce((sum, i) => sum + i.cantidad, 0);
+      setTotalItems(total);
+    }
+
+    actualizarBadge();
+
+    /* Escuchar evento personalizado cuando se agrega al carrito */
+    window.addEventListener('carritoActualizado', actualizarBadge);
+    return () => window.removeEventListener('carritoActualizado', actualizarBadge);
+  }, []);
 
   function handleLogout() {
     logout();
@@ -21,17 +36,13 @@ export default function Navbar() {
       </div>
 
       <div className="nav-links">
-        {puede('verProductos') && (
-          <NavLink to="/" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
-            Inicio
-          </NavLink>
-        )}
+        <NavLink to="/" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
+          Inicio
+        </NavLink>
 
-        {puede('verProductos') && (
-          <NavLink to="/productos" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
-            Productos
-          </NavLink>
-        )}
+        <NavLink to="/productos" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
+          Productos
+        </NavLink>
 
         {puede('comprar') && (
           <NavLink to="/carrito" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
@@ -41,13 +52,9 @@ export default function Navbar() {
         )}
 
         <div className="nav-divider"></div>
-
         <span className="nav-user-nombre">{session?.nombre}</span>
         <span className={`tag-rol-${session?.rol}`}>{session?.rol}</span>
-
-        <button className="nav-logout" onClick={handleLogout}>
-          Salir
-        </button>
+        <button className="nav-logout" onClick={handleLogout}>Salir</button>
       </div>
     </nav>
   );

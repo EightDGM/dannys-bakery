@@ -20,19 +20,16 @@ export default function Carrito() {
   });
   const [formErr, setFormErr] = useState('');
 
-  /* ── Redirigir si no puede comprar ── */
   useEffect(() => {
     if (!puede('comprar')) navigate('/productos');
   }, [puede, navigate]);
 
-  /* ── Toast ── */
   function toast(msg, type = '') {
     const id = Date.now();
     setToasts(t => [...t, { id, msg, type }]);
     setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3000);
   }
 
-  /* ── Cambiar cantidad ── */
   function cambiarCantidad(pro_codigo, delta) {
     const productos = getProductos();
     const producto  = productos.find(p => p.pro_codigo === pro_codigo);
@@ -48,30 +45,29 @@ export default function Carrito() {
     }).filter(Boolean);
     saveCarrito(nuevo);
     setCarrito(nuevo);
+    window.dispatchEvent(new Event('carritoActualizado'));
   }
 
-  /* ── Eliminar item ── */
   function eliminarItem(pro_codigo) {
     const nuevo = carrito.filter(i => i.pro_codigo !== pro_codigo);
     saveCarrito(nuevo);
     setCarrito(nuevo);
+    window.dispatchEvent(new Event('carritoActualizado'));
     toast('Producto eliminado del carrito');
   }
 
-  /* ── Vaciar carrito ── */
   function vaciar() {
     clearCarrito();
     setCarrito([]);
+    window.dispatchEvent(new Event('carritoActualizado'));
     toast('Carrito vaciado');
   }
 
-  /* ── Totales ── */
   const subtotal   = carrito.reduce((s, i) => s + i.pro_precio * i.cantidad, 0);
   const envio      = subtotal > 0 ? 8000 : 0;
   const total      = subtotal + envio;
   const totalItems = carrito.reduce((s, i) => s + i.cantidad, 0);
 
-  /* ── Confirmar compra ── */
   function confirmarCompra() {
     if (!form.nombre || !form.email || !form.direccion) {
       setFormErr('Completa todos los campos');
@@ -108,6 +104,7 @@ export default function Carrito() {
 
     clearCarrito();
     setCarrito([]);
+    window.dispatchEvent(new Event('carritoActualizado'));
     setConfirmado(venta);
     setForm({ nombre: '', email: '', direccion: '' });
     setFormErr('');
@@ -119,7 +116,6 @@ export default function Carrito() {
     }).format(n);
   }
 
-  /* ── VISTA CONFIRMACIÓN ── */
   if (confirmado) {
     return (
       <>
@@ -182,7 +178,6 @@ export default function Carrito() {
     );
   }
 
-  /* ── VISTA CARRITO ── */
   return (
     <>
       <Navbar />
@@ -194,7 +189,6 @@ export default function Carrito() {
 
       <div className="carrito-layout">
 
-        {/* LISTA */}
         <div>
           <div className="carrito-lista-wrap">
             <div className="carrito-lista-hd">
@@ -237,10 +231,8 @@ export default function Carrito() {
           </div>
         </div>
 
-        {/* PANEL DERECHO */}
         {carrito.length > 0 && (
           <div className="panel-right">
-
             <div className="resumen-card">
               <div className="resumen-hd">📋 Resumen del pedido</div>
               <div className="resumen-body">
@@ -292,12 +284,10 @@ export default function Carrito() {
                 </button>
               </div>
             </div>
-
           </div>
         )}
       </div>
 
-      {/* TOASTS */}
       <div className="toasts-container">
         {toasts.map(t => (
           <div key={t.id} className={`toast ${t.type}`}>{t.msg}</div>

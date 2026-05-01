@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getAuthUsers } from '../services/storage';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 export default function Login() {
   const { login, session } = useAuth();
@@ -88,7 +89,7 @@ export default function Login() {
                 className="pass-toggle"
                 onClick={() => setVerPass(!verPass)}
               >
-                {verPass ? '🙈' : '👁️'}
+                {verPass ? <i className="bi bi-eye-slash"></i> : <i className="bi bi-eye"></i>}
               </button>
             </div>
           </div>
