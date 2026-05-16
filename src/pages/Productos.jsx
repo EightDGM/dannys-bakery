@@ -1,136 +1,197 @@
-/* ================================================
-   DANNY'S BAKERY – pages/Productos.jsx
-   ================================================ */
-
-import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useEffect, useState } from 'react';
+import { useAuth } from '../context/useAuth';
 import {
-  getProductos, saveProductos,
-  agregarProducto, editarProducto, eliminarProducto,
-  getCarrito, saveCarrito
+  getProductos,
+  agregarProducto,
+  editarProducto,
+  eliminarProducto,
+  getCarrito,
+  saveCarrito,
 } from '../services/storage';
+import {
+  actualizarProductoApi,
+  crearProductoApi,
+  eliminarProductoApi,
+  listarProductosApi,
+} from '../services/api';
 import Navbar from '../components/Navbar';
 
-export default function Productos() {
-  const { puede } = useAuth();
-  const [productos, setProductos] = useState(() => getProductos());
-  const [busqueda, setBusqueda]   = useState('');
-  const [modal, setModal]         = useState(false);
-  const [editando, setEditando]   = useState(null);
-  const [toasts, setToasts]       = useState([]);
+const DEFAULT_PRODUCT_IMAGE = '/products/placeholder.svg';
+let nextToastId = 0;
 
-  /* ── Formulario modal ── */
+export default function Productos() {
+  const { session, puede } = useAuth();
+  const [productos, setProductos] = useState(() => getProductos());
+  const [busqueda, setBusqueda] = useState('');
+  const [modal, setModal] = useState(false);
+  const [editando, setEditando] = useState(null);
+  const [toasts, setToasts] = useState([]);
+  const [apiActiva, setApiActiva] = useState(false);
+
   const [form, setForm] = useState({
-    pro_nombre: '', pro_precio: '', pro_stock: '', emoji: '🧁'
+    pro_nombre: '',
+    pro_precio: '',
+    pro_stock: '',
+    pro_imagen: DEFAULT_PRODUCT_IMAGE,
   });
   const [formErr, setFormErr] = useState('');
 
-  /* ── Toast ── */
   function toast(msg, type = '') {
-    const id = Date.now();
+    const id = ++nextToastId;
     setToasts(t => [...t, { id, msg, type }]);
     setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3000);
   }
 
-  /* ── Filtrar ── */
+  useEffect(() => {
+    let cancelado = false;
+
+    async function cargarProductos() {
+      try {
+        const productosApi = await listarProductosApi();
+        if (cancelado) return;
+        setProductos(productosApi);
+        setApiActiva(true);
+      } catch {
+        if (cancelado) return;
+        setProductos(getProductos());
+        setApiActiva(false);
+      }
+    }
+
+    cargarProductos();
+    return () => { cancelado = true; };
+  }, []);
+
   const lista = productos.filter(p =>
     p.pro_nombre.toLowerCase().includes(busqueda.toLowerCase())
   );
 
-  /* ── Agregar al carrito ── */
   function agregarAlCarrito(pro_codigo) {
     const producto = productos.find(p => p.pro_codigo === pro_codigo);
     if (!producto || producto.pro_stock === 0) return;
 
-    const carrito = getCarrito();
-    const existe  = carrito.find(i => i.pro_codigo === pro_codigo);
+    const carrito = getCarrito(session);
+    const existe = carrito.find(i => i.pro_codigo === pro_codigo);
 
     if (existe) {
       if (existe.cantidad >= producto.pro_stock) {
-        toast('No hay más stock disponible', 'err');
+        toast('No hay mas stock disponible', 'err');
         return;
       }
       existe.cantidad++;
     } else {
       carrito.push({
-        pro_codigo:  producto.pro_codigo,
-        pro_nombre:  producto.pro_nombre,
-        pro_precio:  producto.pro_precio,
-        emoji:       producto.emoji || '🧁',
-        cantidad:    1
+        pro_codigo: producto.pro_codigo,
+        pro_nombre: producto.pro_nombre,
+        pro_precio: producto.pro_precio,
+        pro_imagen: producto.pro_imagen || DEFAULT_PRODUCT_IMAGE,
+        cantidad: 1,
       });
     }
 
-    saveCarrito(carrito);
-    toast(`✅ ${producto.pro_nombre} agregado al carrito`, 'ok');
+    saveCarrito(carrito, session);
+    toast(`${producto.pro_nombre} agregado al carrito`, 'ok');
     window.dispatchEvent(new Event('carritoActualizado'));
   }
 
-  /* ── Abrir modal agregar ── */
   function abrirAgregar() {
     setEditando(null);
-    setForm({ pro_nombre: '', pro_precio: '', pro_stock: '', emoji: '🧁' });
+    setForm({ pro_nombre: '', pro_precio: '', pro_stock: '', pro_imagen: DEFAULT_PRODUCT_IMAGE });
     setFormErr('');
     setModal(true);
   }
 
-  /* ── Abrir modal editar ── */
   function abrirEditar(p) {
     setEditando(p.pro_codigo);
     setForm({
       pro_nombre: p.pro_nombre,
       pro_precio: p.pro_precio,
-      pro_stock:  p.pro_stock,
-      emoji:      p.emoji || '🧁'
+      pro_stock: p.pro_stock,
+      pro_imagen: p.pro_imagen || DEFAULT_PRODUCT_IMAGE,
     });
     setFormErr('');
     setModal(true);
   }
 
-  /* ── Guardar producto ── */
-  function guardar() {
+  async function guardar() {
     if (!form.pro_nombre || !form.pro_precio || form.pro_stock === '') {
       setFormErr('Completa todos los campos obligatorios');
       return;
     }
 
+    const precio = Number.parseFloat(form.pro_precio);
+    const stock = Number.parseInt(form.pro_stock, 10);
+    if (Number.isNaN(precio) || precio < 0 || Number.isNaN(stock) || stock < 0) {
+      setFormErr('El precio y el stock deben ser valores validos');
+      return;
+    }
+
     const datos = {
-      pro_nombre: form.pro_nombre,
-      pro_precio: parseFloat(form.pro_precio),
-      pro_stock:  parseInt(form.pro_stock),
-      emoji:      form.emoji || '🧁'
+      pro_nombre: form.pro_nombre.trim(),
+      pro_precio: precio,
+      pro_stock: stock,
+      pro_imagen: form.pro_imagen.trim() || DEFAULT_PRODUCT_IMAGE,
     };
 
     if (editando) {
-      editarProducto(editando, datos);
-      toast('✅ Producto actualizado', 'ok');
+      if (apiActiva) {
+        await actualizarProductoApi(editando, datos);
+        setProductos(await listarProductosApi());
+      } else {
+        editarProducto(editando, datos);
+        setProductos(getProductos());
+      }
+      toast('Producto actualizado', 'ok');
     } else {
-      agregarProducto(datos);
-      toast('✅ Producto agregado', 'ok');
+      if (apiActiva) {
+        await crearProductoApi(datos);
+        setProductos(await listarProductosApi());
+      } else {
+        agregarProducto(datos);
+        setProductos(getProductos());
+      }
+      toast('Producto agregado', 'ok');
     }
 
-    setProductos(getProductos());
     setModal(false);
   }
 
-  /* ── Eliminar ── */
-  function handleEliminar(pro_codigo) {
-    if (!confirm('¿Eliminar este producto?')) return;
-    eliminarProducto(pro_codigo);
-    setProductos(getProductos());
-    toast('🗑️ Producto eliminado');
+  async function handleEliminar(pro_codigo) {
+    if (!confirm('Eliminar este producto?')) return;
+
+    if (apiActiva) {
+      await eliminarProductoApi(pro_codigo);
+      setProductos(await listarProductosApi());
+    } else {
+      eliminarProducto(pro_codigo);
+      setProductos(getProductos());
+    }
+
+    toast('Producto eliminado');
   }
 
   function formatPrecio(n) {
     return new Intl.NumberFormat('es-CO', {
-      style: 'currency', currency: 'COP', maximumFractionDigits: 0
+      style: 'currency',
+      currency: 'COP',
+      maximumFractionDigits: 0,
     }).format(n);
   }
 
   function stockLabel(stock) {
-    if (stock === 0) return <span className="tag-stock-out">✕ Agotado</span>;
-    if (stock <= 3)  return <span className="tag-stock-low">⚠ Pocas ({stock})</span>;
-    return             <span className="tag-stock-ok">✓ Disponible</span>;
+    if (stock === 0) return <span className="tag-stock-out">Agotado</span>;
+    if (stock <= 3) return <span className="tag-stock-low">Pocas ({stock})</span>;
+    return <span className="tag-stock-ok">Disponible</span>;
+  }
+
+  function productImage(src, alt) {
+    return (
+      <img
+        src={src || DEFAULT_PRODUCT_IMAGE}
+        alt={alt}
+        onError={e => { e.currentTarget.src = DEFAULT_PRODUCT_IMAGE; }}
+      />
+    );
   }
 
   return (
@@ -138,21 +199,21 @@ export default function Productos() {
       <Navbar />
 
       <div className="page-header" style={{ background: 'linear-gradient(135deg, var(--rose), var(--peach))' }}>
-        <div className="page-header-title">🧁 Nuestros Productos</div>
-        <div className="page-header-sub">Delicias frescas horneadas cada día</div>
+        <div className="page-header-title">Nuestros Productos</div>
+        <div className="page-header-sub">Delicias frescas horneadas cada dia</div>
       </div>
 
-      {/* BARRA GESTIÓN */}
       {puede('editarProductos') && (
         <div className="gestion-bar">
           <div className="gestion-bar-inner">
-            <span className="gestion-label">⚙️ Modo gestión de inventario</span>
-            <button className="btn btn-rose" onClick={abrirAgregar}>+ Agregar producto</button>
+            <span className="gestion-label"><i className="bi bi-gear"></i> Modo gestion de inventario</span>
+            <button className="btn btn-rose" onClick={abrirAgregar}>
+              <i className="bi bi-plus-lg"></i> Agregar producto
+            </button>
           </div>
         </div>
       )}
 
-      {/* FILTROS */}
       <div className="filter-bar">
         <span className="filter-count">{lista.length} producto{lista.length !== 1 ? 's' : ''}</span>
         <div className="search-input-wrap">
@@ -165,18 +226,17 @@ export default function Productos() {
         </div>
       </div>
 
-      {/* GRILLA */}
       <div className="productos-wrap">
         <div className="productos-grid">
           {lista.length === 0 ? (
             <div className="empty-state" style={{ gridColumn: '1/-1' }}>
-              <span className="ei">🧁</span>
+              <span className="ei"><i className="bi bi-search"></i></span>
               <p>No se encontraron productos</p>
             </div>
           ) : (
             lista.map(p => (
               <div className="product-card" key={p.pro_codigo}>
-                <div className="product-card-img">{p.emoji}</div>
+                <div className="product-card-img">{productImage(p.pro_imagen, p.pro_nombre)}</div>
                 <div className="product-card-body">
                   <div className="product-card-name">{p.pro_nombre}</div>
                   <div className="product-card-price">{formatPrecio(p.pro_precio)}</div>
@@ -189,7 +249,7 @@ export default function Productos() {
                       disabled={p.pro_stock === 0}
                       onClick={() => agregarAlCarrito(p.pro_codigo)}
                     >
-                      🛒 Agregar al carrito
+                      <i className="bi bi-cart-plus"></i> Agregar al carrito
                     </button>
                   </div>
                 )}
@@ -200,15 +260,16 @@ export default function Productos() {
                       style={{ flex: 1, justifyContent: 'center', padding: '7px' }}
                       onClick={() => abrirEditar(p)}
                     >
-                      ✏️ Editar
+                      <i className="bi bi-pencil"></i> Editar
                     </button>
                     {puede('eliminarProductos') && (
                       <button
                         className="btn btn-danger"
                         style={{ padding: '7px 12px' }}
                         onClick={() => handleEliminar(p.pro_codigo)}
+                        aria-label="Eliminar producto"
                       >
-                        🗑️
+                        <i className="bi bi-trash"></i>
                       </button>
                     )}
                   </div>
@@ -219,38 +280,62 @@ export default function Productos() {
         </div>
       </div>
 
-      {/* MODAL */}
       {modal && (
         <div className="modal-overlay open" onClick={() => setModal(false)}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
             <div className="modal-hd">
               <div className="modal-title">{editando ? 'Editar producto' : 'Agregar producto'}</div>
-              <button className="modal-close" onClick={() => setModal(false)}>✕</button>
+              <button className="modal-close" onClick={() => setModal(false)} aria-label="Cerrar">
+                <i className="bi bi-x-lg"></i>
+              </button>
             </div>
             <div className="modal-body">
               <div className="form-field" style={{ marginBottom: 12 }}>
                 <label className="form-label">Nombre *</label>
-                <input className="form-input" type="text" value={form.pro_nombre}
-                  onChange={e => setForm({ ...form, pro_nombre: e.target.value })} />
+                <input
+                  className="form-input"
+                  type="text"
+                  value={form.pro_nombre}
+                  onChange={e => setForm({ ...form, pro_nombre: e.target.value })}
+                />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
                 <div className="form-field">
                   <label className="form-label">Precio (COP) *</label>
-                  <input className="form-input" type="number" value={form.pro_precio}
-                    onChange={e => setForm({ ...form, pro_precio: e.target.value })} />
+                  <input
+                    className="form-input"
+                    type="number"
+                    min="0"
+                    value={form.pro_precio}
+                    onChange={e => setForm({ ...form, pro_precio: e.target.value })}
+                  />
                 </div>
                 <div className="form-field">
                   <label className="form-label">Stock *</label>
-                  <input className="form-input" type="number" value={form.pro_stock}
-                    onChange={e => setForm({ ...form, pro_stock: e.target.value })} />
+                  <input
+                    className="form-input"
+                    type="number"
+                    min="0"
+                    value={form.pro_stock}
+                    onChange={e => setForm({ ...form, pro_stock: e.target.value })}
+                  />
                 </div>
               </div>
               <div className="form-field" style={{ marginBottom: 20 }}>
-                <label className="form-label">Emoji</label>
-                <input className="form-input" type="text" maxLength={4} value={form.emoji}
-                  onChange={e => setForm({ ...form, emoji: e.target.value })} />
+                <label className="form-label">URL de imagen</label>
+                <input
+                  className="form-input"
+                  type="text"
+                  placeholder="/products/torta-chocolate.jpg"
+                  value={form.pro_imagen}
+                  onChange={e => setForm({ ...form, pro_imagen: e.target.value })}
+                />
               </div>
-              {formErr && <div style={{ color: '#C62828', fontSize: '0.8rem', marginBottom: 12, fontWeight: 600 }}>{formErr}</div>}
+              {formErr && (
+                <div style={{ color: '#C62828', fontSize: '0.8rem', marginBottom: 12, fontWeight: 600 }}>
+                  {formErr}
+                </div>
+              )}
               <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
                 <button className="btn btn-ghost" onClick={() => setModal(false)}>Cancelar</button>
                 <button className="btn btn-rose" onClick={guardar}>Guardar</button>
@@ -260,7 +345,6 @@ export default function Productos() {
         </div>
       )}
 
-      {/* TOASTS */}
       <div className="toasts-container">
         {toasts.map(t => (
           <div key={t.id} className={`toast ${t.type}`}>{t.msg}</div>
@@ -268,8 +352,8 @@ export default function Productos() {
       </div>
 
       <footer className="footer">
-        <span className="footer-logo">🎂 Danny's Bakery</span>
-        <span>© 2025 · Hecho con 🤍</span>
+        <span className="footer-logo">Danny's Bakery</span>
+        <span>2025 - Hecho con dedicacion</span>
       </footer>
     </>
   );

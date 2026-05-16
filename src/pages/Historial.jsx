@@ -1,16 +1,35 @@
-import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useEffect, useState } from 'react';
+import { useAuth } from '../context/useAuth';
 import { getVentas } from '../services/storage';
+import { listarVentasApi } from '../services/api';
 import Navbar from '../components/Navbar';
 
 export default function Historial() {
   const { session, puede } = useAuth();
-  const todasLasVentas = getVentas();
+  const [todasLasVentas, setTodasLasVentas] = useState(() => getVentas());
 
-  /* usuario ve solo sus compras, vendedor/admin ven todas */
+  useEffect(() => {
+    let cancelado = false;
+
+    async function cargarVentas() {
+      try {
+        const ventasApi = await listarVentasApi();
+        if (!cancelado) setTodasLasVentas(ventasApi);
+      } catch {
+        if (!cancelado) setTodasLasVentas(getVentas());
+      }
+    }
+
+    cargarVentas();
+    return () => { cancelado = true; };
+  }, []);
+
   const ventas = puede('verVentas')
     ? todasLasVentas
-    : todasLasVentas.filter(v => v.usu_codigo === session?.id);
+    : todasLasVentas.filter(v =>
+      v.usu_codigo === session?.id ||
+      v.cliente?.email === session?.email
+    );
 
   const [busqueda, setBusqueda] = useState('');
   const [expandido, setExpandido] = useState(null);
@@ -22,7 +41,9 @@ export default function Historial() {
 
   function formatPrecio(n) {
     return new Intl.NumberFormat('es-CO', {
-      style: 'currency', currency: 'COP', maximumFractionDigits: 0
+      style: 'currency',
+      currency: 'COP',
+      maximumFractionDigits: 0,
     }).format(n);
   }
 
@@ -35,29 +56,28 @@ export default function Historial() {
       <Navbar />
 
       <div className="page-header" style={{ background: 'linear-gradient(135deg, var(--sage), var(--butter))' }}>
-        <div className="page-header-title">📋 Historial de {puede('verVentas') ? 'Ventas' : 'Compras'}</div>
+        <div className="page-header-title">
+          Historial de {puede('verVentas') ? 'Ventas' : 'Pedidos'}
+        </div>
         <div className="page-header-sub">{lista.length} registro{lista.length !== 1 ? 's' : ''}</div>
       </div>
 
       <div className="historial-wrap">
-
-        {/* BUSCADOR */}
         <div className="historial-bar">
           <div className="search-input-wrap">
             <input
               type="text"
-              placeholder="Buscar por cliente o N° pedido..."
+              placeholder={puede('verVentas') ? 'Buscar por cliente o No. pedido...' : 'Buscar por No. pedido...'}
               value={busqueda}
               onChange={e => setBusqueda(e.target.value)}
             />
           </div>
         </div>
 
-        {/* LISTA */}
         {lista.length === 0 ? (
           <div className="empty-state">
-            <span className="ei">📋</span>
-            <p>{busqueda ? 'No se encontraron resultados' : 'No hay registros aún'}</p>
+            <span className="ei"><i className="bi bi-clipboard2"></i></span>
+            <p>{busqueda ? 'No se encontraron resultados' : 'No hay registros aun'}</p>
           </div>
         ) : (
           <div className="historial-lista">
@@ -81,14 +101,22 @@ export default function Historial() {
                   <div className="historial-card-body">
                     <div className="historial-detalle-title">Productos</div>
                     {v.detalle?.map((d, i) => (
-                      <div className="historial-detalle-row" key={i}>
-                        <span>Producto #{d.pro_codigo} ×{d.cantidad}</span>
+                      <div className="historial-detalle-row" key={d.det_codigo || i}>
+                        <span>{d.pro_nombre || `Producto #${d.pro_codigo}`} x{d.cantidad}</span>
                         <span>{formatPrecio(d.subtotal)}</span>
                       </div>
                     ))}
                     <div className="historial-detalle-row" style={{ marginTop: 8, borderTop: '1px solid var(--border)', paddingTop: 8 }}>
-                      <span style={{ color: 'var(--text-muted)' }}>Envío</span>
+                      <span style={{ color: 'var(--text-muted)' }}>Envio</span>
                       <span>{formatPrecio(v.ven_total - v.detalle?.reduce((s, d) => s + d.subtotal, 0))}</span>
+                    </div>
+                    <div className="historial-detalle-row">
+                      <span style={{ color: 'var(--text-muted)' }}>Estado</span>
+                      <span>{v.estado || 'pendiente'}</span>
+                    </div>
+                    <div className="historial-detalle-row">
+                      <span style={{ color: 'var(--text-muted)' }}>Entrega</span>
+                      <span>{v.plataforma_entrega || 'pendiente'}</span>
                     </div>
                     <div className="historial-detalle-row historial-total-row">
                       <span>Total</span>
@@ -96,8 +124,8 @@ export default function Historial() {
                     </div>
                     {puede('verVentas') && (
                       <div className="historial-cliente-info">
-                        <span>📧 {v.cliente?.email}</span>
-                        <span>📍 {v.cliente?.direccion}</span>
+                        <span><i className="bi bi-envelope"></i> {v.cliente?.email}</span>
+                        <span><i className="bi bi-geo-alt"></i> {v.cliente?.direccion}</span>
                       </div>
                     )}
                   </div>
@@ -109,8 +137,8 @@ export default function Historial() {
       </div>
 
       <footer className="footer">
-        <span className="footer-logo">🎂 Danny's Bakery</span>
-        <span>© 2025 · Hecho con 🤍</span>
+        <span className="footer-logo">Danny's Bakery</span>
+        <span>2025 - Hecho con dedicacion</span>
       </footer>
     </>
   );

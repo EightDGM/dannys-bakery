@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAuthUsers } from '../services/storage';
+import { registrarUsuario } from '../services/storage';
+import { registrarUsuarioApi } from '../services/api';
 
 const TIPOS_DOCUMENTO = ['CC', 'TI', 'CE', 'PA'];
 
@@ -8,12 +9,12 @@ export default function Registro() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
-    usu_nombre:    '',
-    usu_email:     '',
+    usu_nombre: '',
+    usu_email: '',
     tipoDocumento: 'CC',
-    usu_id:        '',
-    edad:          '',
-    pass:          ''
+    usu_id: '',
+    edad: '',
+    pass: '',
   });
 
   const [error, setError] = useState('');
@@ -24,7 +25,7 @@ export default function Registro() {
     setError('');
   }
 
-  function handleRegistro(e) {
+  async function handleRegistro(e) {
     e.preventDefault();
 
     if (!form.usu_nombre || !form.usu_email || !form.usu_id || !form.edad || !form.pass) {
@@ -32,44 +33,23 @@ export default function Registro() {
       return;
     }
 
-    if (isNaN(form.edad) || form.edad < 1 || form.edad > 120) {
-      setError('Ingresa una edad válida');
+    if (Number.isNaN(Number(form.edad)) || Number(form.edad) < 1 || Number(form.edad) > 120) {
+      setError('Ingresa una edad valida');
       return;
     }
 
-    const authUsers = getAuthUsers();
-    const existe = authUsers.find(u => u.email === form.usu_email);
-    if (existe) {
-      setError('Ya existe una cuenta con ese correo');
+    const resultado = registrarUsuario(form);
+    if (!resultado.ok) {
+      setError(resultado.error);
       return;
     }
 
-    /* Guardar en auth_users */
-    const nuevoAuthUser = {
-      id:     authUsers.length + 1,
-      email:  form.usu_email,
-      pass:   form.pass,
-      rol:    'usuario',
-      nombre: form.usu_nombre
-    };
+    try {
+      await registrarUsuarioApi(form);
+    } catch {
+      // Si el backend falla, igual puede iniciar sesión con localStorage
+    }
 
-    authUsers.push(nuevoAuthUser);
-    localStorage.setItem('bakery_auth_users', JSON.stringify(authUsers));
-
-    /* Guardar en tabla usuarios con modelo del backend */
-    const usuarios = JSON.parse(localStorage.getItem('bakery_usuarios') || '[]');
-    const nextId   = usuarios.length ? Math.max(...usuarios.map(u => u.usu_codigo)) + 1 : 1;
-
-    usuarios.push({
-      usu_codigo:    nextId,
-      usu_nombre:    form.usu_nombre,
-      usu_email:     form.usu_email,
-      usu_id:        form.usu_id,
-      tipoDocumento: form.tipoDocumento,
-      edad:          parseInt(form.edad)
-    });
-
-    localStorage.setItem('bakery_usuarios', JSON.stringify(usuarios));
     setExito(true);
   }
 
@@ -77,14 +57,19 @@ export default function Registro() {
     return (
       <div className="login-page">
         <div className="login-card" style={{ textAlign: 'center' }}>
-          <span style={{ fontSize: 52, display: 'block', marginBottom: 16 }}>🎉</span>
-          <div className="login-title">¡Registro exitoso!</div>
+          <span style={{ fontSize: 52, display: 'block', marginBottom: 16 }}>
+            <i className="bi bi-check-circle-fill"></i>
+          </span>
+          <div className="login-title">Registro exitoso</div>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', margin: '12px 0 24px' }}>
-            Tu cuenta ha sido creada. Inicia sesión con tu correo y contraseña.
+            Tu cuenta ha sido creada. Inicia sesion con tu correo y contrasena.
           </p>
-          <button className="btn btn-rose" style={{ width: '100%', justifyContent: 'center' }}
-            onClick={() => navigate('/login')}>
-            Ir al login →
+          <button
+            className="btn btn-rose"
+            style={{ width: '100%', justifyContent: 'center' }}
+            onClick={() => navigate('/login')}
+          >
+            Ir al login
           </button>
         </div>
       </div>
@@ -94,16 +79,18 @@ export default function Registro() {
   return (
     <div className="login-page">
       <div className="login-card">
-
         <div className="login-brand">
-          <span className="login-logo">🎂</span>
+          <span className="login-logo"><i className="bi bi-shop"></i></span>
           <div className="login-title">Crear cuenta</div>
-          <div className="login-sub">Únete a Danny's Bakery</div>
+          <div className="login-sub">Unete a Danny's Bakery</div>
         </div>
 
         <form className="login-form" onSubmit={handleRegistro}>
-
-          {error && <div className="login-err">⚠️ {error}</div>}
+          {error && (
+            <div className="login-err">
+              <i className="bi bi-exclamation-triangle-fill"></i> {error}
+            </div>
+          )}
 
           <div className="form-field">
             <label className="form-label">Nombre completo *</label>
@@ -111,14 +98,14 @@ export default function Registro() {
               className="form-input"
               type="text"
               name="usu_nombre"
-              placeholder="Ana Rodríguez"
+              placeholder="Ana Rodriguez"
               value={form.usu_nombre}
               onChange={handleChange}
             />
           </div>
 
           <div className="form-field">
-            <label className="form-label">Correo electrónico *</label>
+            <label className="form-label">Correo electronico *</label>
             <input
               className="form-input"
               type="email"
@@ -144,7 +131,7 @@ export default function Registro() {
               </select>
             </div>
             <div className="form-field">
-              <label className="form-label">N° Documento *</label>
+              <label className="form-label">No. Documento *</label>
               <input
                 className="form-input"
                 type="text"
@@ -171,31 +158,30 @@ export default function Registro() {
           </div>
 
           <div className="form-field">
-            <label className="form-label">Contraseña *</label>
+            <label className="form-label">Contrasena *</label>
             <input
               className="form-input"
               type="password"
               name="pass"
-              placeholder="••••••••"
+              placeholder="********"
               value={form.pass}
               onChange={handleChange}
             />
           </div>
 
           <button className="btn btn-rose btn-login" type="submit">
-            Crear cuenta →
+            Crear cuenta
           </button>
 
           <div style={{ textAlign: 'center', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-            ¿Ya tienes cuenta?{' '}
+            Ya tienes cuenta?{' '}
             <span
               style={{ color: 'var(--rose-dk)', fontWeight: 700, cursor: 'pointer' }}
               onClick={() => navigate('/login')}
             >
-              Inicia sesión
+              Inicia sesion
             </span>
           </div>
-
         </form>
       </div>
     </div>

@@ -18,8 +18,8 @@ export default function App() {
           <Route path="/" element={<RutaProtegida><Home /></RutaProtegida>} />
           <Route path="/productos" element={<RutaProtegida><Productos /></RutaProtegida>} />
           <Route path="/carrito" element={<RutaProtegida><Carrito /></RutaProtegida>} />
-          <Route path="*" element={<Navigate to="/" replace />} />
           <Route path="/historial" element={<RutaProtegida><Historial /></RutaProtegida>} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
