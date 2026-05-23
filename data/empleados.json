@@ -1,0 +1,18 @@
+[
+  {
+    "empleado_id":1,
+    "empleado":"Danny Lopez",
+    "correo":"admin@bakery.com",
+    "documento":"1000000001",
+    "cargo":"admin",
+    "salario":2500000.0
+  },
+  {
+    "empleado_id":2,
+    "empleado":"Carlos Mendoza",
+    "correo":"vendedor@bakery.com",
+    "documento":"1000000002",
+    "cargo":"vendedor",
+    "salario":1800000.0
+  }
+]

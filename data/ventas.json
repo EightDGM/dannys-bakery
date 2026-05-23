@@ -1,0 +1,28 @@
+[
+  {
+    "venta_id":1,
+    "fecha":1778889600000,
+    "totalcompra":44000.0,
+    "usuario_id":6,
+    "cliente":"monet",
+    "correo_cliente":"monet@gmail.com",
+    "direccion":"calle 85 #35-55",
+    "empleado_id":2,
+    "empleado":"Carlos Mendoza",
+    "estado":"pendiente",
+    "plataforma_entrega":"pendiente"
+  },
+  {
+    "venta_id":2,
+    "fecha":1779408000000,
+    "totalcompra":44000.0,
+    "usuario_id":1,
+    "cliente":"Ana Rodriguez",
+    "correo_cliente":"cliente@bakery.com",
+    "direccion":"calle 96 #45-43",
+    "empleado_id":2,
+    "empleado":"Carlos Mendoza",
+    "estado":"pendiente",
+    "plataforma_entrega":"pendiente"
+  }
+]

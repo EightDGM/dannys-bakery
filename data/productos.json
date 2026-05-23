@@ -1,0 +1,58 @@
+[
+  {
+    "producto_id":1,
+    "nombre":"Torta de Chocolate",
+    "precio":45000.0,
+    "stock":8,
+    "imagen":"\/products\/torta_de_chocolate.png"
+  },
+  {
+    "producto_id":2,
+    "nombre":"Cupcake de Vainilla",
+    "precio":8500.0,
+    "stock":24,
+    "imagen":"\/products\/cupcake.png"
+  },
+  {
+    "producto_id":3,
+    "nombre":"Galletas de Mantequilla",
+    "precio":12000.0,
+    "stock":0,
+    "imagen":"\/products\/galletas_artesanales.png"
+  },
+  {
+    "producto_id":4,
+    "nombre":"Croissant de Jamon",
+    "precio":9000.0,
+    "stock":11,
+    "imagen":"\/products\/croassant_relleno.png"
+  },
+  {
+    "producto_id":5,
+    "nombre":"Donut Glaseada",
+    "precio":6500.0,
+    "stock":0,
+    "imagen":"\/products\/donut.png"
+  },
+  {
+    "producto_id":6,
+    "nombre":"Pie de Limon",
+    "precio":38000.0,
+    "stock":5,
+    "imagen":"\/products\/lemon_pie.png"
+  },
+  {
+    "producto_id":7,
+    "nombre":"Cheesecake de Fresa",
+    "precio":42000.0,
+    "stock":6,
+    "imagen":"\/products\/cheese_cake.png"
+  },
+  {
+    "producto_id":8,
+    "nombre":"Pan de Queso",
+    "precio":4500.0,
+    "stock":20,
+    "imagen":"\/products\/pan_de_queso.png"
+  }
+]

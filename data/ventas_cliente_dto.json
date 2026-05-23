@@ -1,0 +1,14 @@
+[
+  {
+    "venta_id":2,
+    "fecha":1779408000000,
+    "totalcompra":44000.0,
+    "usuario_id":1,
+    "cliente":"Ana Rodriguez",
+    "correo_cliente":"cliente@bakery.com",
+    "direccion":"calle 96 #45-43",
+    "empleado":"Carlos Mendoza",
+    "estado":"pendiente",
+    "plataforma_entrega":"pendiente"
+  }
+]

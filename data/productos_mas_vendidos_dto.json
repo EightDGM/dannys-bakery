@@ -1,0 +1,16 @@
+[
+  {
+    "producto_id":4,
+    "producto":"Croissant de Jamon",
+    "precio":9000.0,
+    "cantidad_vendida":4,
+    "total_vendido":36000.0
+  },
+  {
+    "producto_id":3,
+    "producto":"Galletas de Mantequilla",
+    "precio":12000.0,
+    "cantidad_vendida":3,
+    "total_vendido":36000.0
+  }
+]

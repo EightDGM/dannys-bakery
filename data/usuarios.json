@@ -1,0 +1,50 @@
+[
+  {
+    "usuario_id":1,
+    "cliente":"Ana Rodriguez",
+    "correo":"cliente@bakery.com",
+    "documento":"1020304050"
+  },
+  {
+    "usuario_id":2,
+    "cliente":"maria",
+    "correo":"maria@gmail.com",
+    "documento":"1013457865"
+  },
+  {
+    "usuario_id":3,
+    "cliente":"jose",
+    "correo":"jose@gmail.com",
+    "documento":"1234567890"
+  },
+  {
+    "usuario_id":4,
+    "cliente":"jose",
+    "correo":"jose@gmail.com",
+    "documento":"1045983546"
+  },
+  {
+    "usuario_id":5,
+    "cliente":"breyder",
+    "correo":"breyder@gmail.com",
+    "documento":"1000409834"
+  },
+  {
+    "usuario_id":6,
+    "cliente":"monet",
+    "correo":"monet@gmail.com",
+    "documento":"1209487659"
+  },
+  {
+    "usuario_id":7,
+    "cliente":"mariateresa",
+    "correo":"mariateresa@gmail.com",
+    "documento":"123456789"
+  },
+  {
+    "usuario_id":8,
+    "cliente":"jose perez",
+    "correo":"maicol@gmail.com",
+    "documento":"1013459824"
+  }
+]

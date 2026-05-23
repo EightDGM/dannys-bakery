@@ -1,0 +1,9 @@
+producto_id,nombre,precio,stock,imagen
+1,Torta de Chocolate,45000.0,8,/products/torta_de_chocolate.png
+2,Cupcake de Vainilla,8500.0,24,/products/cupcake.png
+3,Galletas de Mantequilla,12000.0,0,/products/galletas_artesanales.png
+4,Croissant de Jamon,9000.0,11,/products/croassant_relleno.png
+5,Donut Glaseada,6500.0,0,/products/donut.png
+6,Pie de Limon,38000.0,5,/products/lemon_pie.png
+7,Cheesecake de Fresa,42000.0,6,/products/cheese_cake.png
+8,Pan de Queso,4500.0,20,/products/pan_de_queso.png
