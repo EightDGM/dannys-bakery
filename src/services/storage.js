@@ -227,6 +227,18 @@ export function registrarVenta(venta) {
   return nueva;
 }
 
+export function actualizarEntregaVenta(venCodigo, plataformaEntrega) {
+  const ventas = getVentas();
+  const actualizadas = ventas.map(venta =>
+    venta.ven_codigo === venCodigo
+      ? { ...venta, plataforma_entrega: plataformaEntrega }
+      : venta
+  );
+
+  writeJson(KEYS.ventas, actualizadas);
+  return actualizadas.find(venta => venta.ven_codigo === venCodigo) || null;
+}
+
 // Permisos por rol
 export const PERMISOS = {
   usuario: {

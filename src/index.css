@@ -1162,6 +1162,20 @@ body {
   color: var(--text-muted);
 }
 
+.historial-select {
+  min-width: 170px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 6px 10px;
+  font: inherit;
+}
+
+.historial-select:disabled {
+  opacity: 0.65;
+}
+
 select.form-input {
   cursor: pointer;
   -webkit-appearance: none;
