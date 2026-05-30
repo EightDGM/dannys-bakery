@@ -11,6 +11,14 @@ node_modules
 dist
 dist-ssr
 *.local
+__pycache__/
+*.py[cod]
+analisis_datos/venv/
+analisis_datos/data/*
+!analisis_datos/data/.gitkeep
+analisis_datos/graficos/*
+!analisis_datos/graficos/.gitkeep
+.tmp_*/
 
 # Editor directories and files
 .vscode/*

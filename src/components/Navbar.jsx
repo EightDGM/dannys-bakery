@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { getCarrito } from '../services/storage';
 
 export default function Navbar() {
@@ -8,20 +8,18 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [totalItems, setTotalItems] = useState(0);
 
-  /*actualiza badge al montar y cuando cambie el carrito*/
   useEffect(() => {
     function actualizarBadge() {
-      const carrito = getCarrito();
-      const total   = carrito.reduce((sum, i) => sum + i.cantidad, 0);
+      const carrito = getCarrito(session);
+      const total = carrito.reduce((sum, i) => sum + i.cantidad, 0);
       setTotalItems(total);
     }
 
     actualizarBadge();
 
-    /* evento personalizado cuando se agrega al carrito */
     window.addEventListener('carritoActualizado', actualizarBadge);
     return () => window.removeEventListener('carritoActualizado', actualizarBadge);
-  }, []);
+  }, [session]);
 
   function handleLogout() {
     logout();
@@ -31,7 +29,7 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       <div className="nav-brand">
-        <span className="nav-logo">🎂</span>
+        <span className="nav-logo"><i className="bi bi-shop"></i></span>
         <span className="nav-name">Danny's Bakery</span>
       </div>
 
@@ -50,7 +48,7 @@ export default function Navbar() {
 
         {puede('comprar') && (
           <NavLink to="/carrito" className={({ isActive }) => 'nav-link' + (isActive ? ' active' : '')}>
-            🛒 Carrito
+            <i className="bi bi-cart3"></i> Carrito
             <span className="cart-badge">{totalItems}</span>
           </NavLink>
         )}
