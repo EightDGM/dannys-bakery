@@ -87,6 +87,20 @@ function detalleDesdeApi(detalle) {
   };
 }
 
+function ventaParaApi(venta, cambios = {}) {
+  return {
+    venFecha: cambios.ven_fecha || venta.ven_fecha,
+    venTotal: cambios.ven_total ?? venta.ven_total,
+    clienteNombre: cambios.cliente?.nombre ?? venta.cliente?.nombre,
+    clienteEmail: cambios.cliente?.email ?? venta.cliente?.email,
+    clienteDireccion: cambios.cliente?.direccion ?? venta.cliente?.direccion,
+    estado: cambios.estado || venta.estado || 'pendiente',
+    plataformaEntrega: cambios.plataforma_entrega || venta.plataforma_entrega || 'pendiente',
+    usuario: venta.usu_codigo ? { usuCodigo: venta.usu_codigo } : null,
+    empleado: venta.emp_codigo ? { empCodigo: venta.emp_codigo } : null,
+  };
+}
+
 async function buscarUsuarioPorEmail(email) {
   const usuarios = await request('/usuarios');
   return usuarios.map(usuarioDesdeApi).find(usuario => usuario.usu_email === email) || null;
@@ -190,4 +204,19 @@ export async function registrarVentaApi(venta, session) {
   const normalizada = ventaDesdeApi(ventaCreada);
   normalizada.detalle = detalles.map(detalleDesdeApi);
   return normalizada;
+}
+
+export async function actualizarEntregaVentaApi(venta, plataformaEntrega) {
+  const actualizada = await request(`/ventas/${venta.ven_codigo}`, {
+    method: 'PUT',
+    body: JSON.stringify(ventaParaApi(venta, {
+      plataforma_entrega: plataformaEntrega,
+    })),
+  });
+
+  return {
+    ...venta,
+    ...ventaDesdeApi(actualizada),
+    detalle: venta.detalle || [],
+  };
 }

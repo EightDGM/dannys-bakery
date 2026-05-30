@@ -1,8 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/useAuth';
-import { getVentas } from '../services/storage';
-import { listarVentasApi } from '../services/api';
+import { actualizarEntregaVenta, getVentas } from '../services/storage';
+import { actualizarEntregaVentaApi, listarVentasApi } from '../services/api';
 import Navbar from '../components/Navbar';
+
+const PLATAFORMAS_ENTREGA = [
+  'pendiente',
+  'domicilio propio',
+  'Rappi',
+  'Didi Food',
+  'cliente recoge',
+];
 
 export default function Historial() {
   const { session, puede } = useAuth();
@@ -33,6 +41,7 @@ export default function Historial() {
 
   const [busqueda, setBusqueda] = useState('');
   const [expandido, setExpandido] = useState(null);
+  const [guardandoEntrega, setGuardandoEntrega] = useState(null);
 
   const lista = ventas.filter(v =>
     v.cliente?.nombre?.toLowerCase().includes(busqueda.toLowerCase()) ||
@@ -49,6 +58,27 @@ export default function Historial() {
 
   function toggleExpandido(id) {
     setExpandido(expandido === id ? null : id);
+  }
+
+  async function cambiarEntrega(venta, plataformaEntrega) {
+    if (!puede('verVentas')) return;
+    setGuardandoEntrega(venta.ven_codigo);
+
+    try {
+      const actualizada = await actualizarEntregaVentaApi(venta, plataformaEntrega);
+      setTodasLasVentas(prev => prev.map(v =>
+        v.ven_codigo === venta.ven_codigo ? actualizada : v
+      ));
+    } catch {
+      const actualizadaLocal = actualizarEntregaVenta(venta.ven_codigo, plataformaEntrega);
+      setTodasLasVentas(prev => prev.map(v =>
+        v.ven_codigo === venta.ven_codigo
+          ? { ...v, ...(actualizadaLocal || {}), plataforma_entrega: plataformaEntrega }
+          : v
+      ));
+    } finally {
+      setGuardandoEntrega(null);
+    }
   }
 
   return (
@@ -116,7 +146,22 @@ export default function Historial() {
                     </div>
                     <div className="historial-detalle-row">
                       <span style={{ color: 'var(--text-muted)' }}>Entrega</span>
-                      <span>{v.plataforma_entrega || 'pendiente'}</span>
+                      {puede('verVentas') ? (
+                        <select
+                          className="historial-select"
+                          value={v.plataforma_entrega || 'pendiente'}
+                          disabled={guardandoEntrega === v.ven_codigo}
+                          onChange={e => cambiarEntrega(v, e.target.value)}
+                        >
+                          {PLATAFORMAS_ENTREGA.map(plataforma => (
+                            <option key={plataforma} value={plataforma}>
+                              {plataforma}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span>{v.plataforma_entrega || 'pendiente'}</span>
+                      )}
                     </div>
                     <div className="historial-detalle-row historial-total-row">
                       <span>Total</span>
